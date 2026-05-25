@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dr. García Pediatría — Turnos Online</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --verde:#2d6a4f;--verde-c:#52b788;--verde-p:#d8f3dc;
+    --azul:#1b4965;--azul-c:#bee9e8;--naranja:#e07a5f;
+    --amarillo:#f2cc8f;--gris:#6b7280;--gris-c:#f4f4f4;
+    --texto:#1a1a2e;--sombra:0 4px 24px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:#eef4ee;color:var(--texto);min-height:100vh}
+  /* NAV */
+  nav{background:var(--verde);padding:14px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.18)}
+  .nav-brand{display:flex;align-items:center;gap:12px}
+  .nav-logo{width:38px;height:38px;background:var(--verde-c);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .nav-brand h1{font-family:'Playfair Display',serif;color:#fff;font-size:17px}
+  .nav-brand p{color:rgba(255,255,255,.65);font-size:11px}
+  .nav-links{display:flex;gap:8px}
+  .nav-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;transition:all .2s}
+  .nav-btn:hover,.nav-btn.active{background:#fff;color:var(--verde)}
+  /* LAYOUT */
+  .page{display:none}.page.active{display:block}
+  .hero{background:linear-gradient(135deg,var(--verde),#193f2e);padding:56px 28px;text-align:center;color:#fff}
+  .hero h2{font-family:'Playfair Display',serif;font-size:34px;margin-bottom:10px}
+  .hero p{font-size:15px;opacity:.82;max-width:480px;margin:0 auto}
+  .container{max-width:940px;margin:0 auto;padding:28px 16px}
+  .card{background:#fff;border-radius:16px;padding:26px;box-shadow:var(--sombra);margin-bottom:22px}
+  .card-title{font-family:'Playfair Display',serif;font-size:19px;color:var(--verde);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+  /* SEMANA NAV */
+  .semana-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .semana-nav h3{font-size:14px;font-weight:600}
+  .btn-nav{background:var(--gris-c);border:none;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .2s}
+  .btn-nav:hover{background:var(--verde-p)}
+  /* GRILLA */
+  .dias-outer{overflow-x:auto}
+  .dias-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;min-width:480px;margin-bottom:6px}
+  .dia-header{text-align:center;font-size:10px;font-weight:700;color:var(--gris);text-transform:uppercase;padding:8px 2px;letter-spacing:.04em}
+  .turnos-col{display:flex;flex-direction:column;gap:3px}
+  .slot{padding:5px 2px;border-radius:6px;font-size:10px;text-align:center;cursor:pointer;transition:all .2s;border:1px solid transparent;font-weight:600}
+  .slot.libre{background:var(--verde-p);color:var(--verde);border-color:#b7e4c7}
+  .slot.libre:hover{background:var(--verde);color:#fff;transform:scale(1.03)}
+  .slot.ocupado{background:#f0f0f0;color:#bbb;cursor:not-allowed}
+  .slot.cancelado{background:#fde8e8;color:#e53e3e;cursor:not-allowed;text-decoration:line-through}
+  .slot.atendido{background:var(--azul-c);color:var(--azul);cursor:not-allowed}
+  .leyenda{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap}
+  .leyenda-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gris)}
+  .leyenda-dot{width:11px;height:11px;border-radius:3px}
+  /* FORMS */
+  .form-group{margin-bottom:14px}
+  .form-group label{display:block;font-size:12px;font-weight:700;color:var(--texto);margin-bottom:5px;text-transform:uppercase;letter-spacing:.03em}
+  .req{color:var(--naranja)}
+  .form-control{width:100%;padding:10px 13px;border:1.5px solid #e2e8f0;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;transition:border-color .2s;background:#fff}
+  .form-control:focus{outline:none;border-color:var(--verde-c);box-shadow:0 0 0 3px rgba(82,183,136,.12)}
+  .form-control.err{border-color:var(--naranja)}
+  .err-msg{font-size:11px;color:var(--naranja);margin-top:3px;min-height:15px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  /* BUTTONS */
+  .btn-p{background:var(--verde);color:#fff;border:none;padding:13px 24px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:all .2s;margin-top:6px}
+  .btn-p:hover{background:#1f5739;transform:translateY(-1px)}
+  .btn-s{background:#fff;color:var(--verde);border:2px solid var(--verde);padding:9px 18px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+  .btn-s:hover{background:var(--verde-p)}
+  .btn-sm{padding:6px 12px;font-size:12px;border-radius:7px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;transition:all .2s;white-space:nowrap}
+  .btn-cancel{background:#fde8e8;color:#e53e3e;border:1px solid #fca5a5}.btn-cancel:hover{background:#e53e3e;color:#fff}
+  .btn-wsp{background:#25d366;color:#fff}.btn-wsp:hover{background:#1da851}
+  .btn-ok{background:var(--azul-c);color:var(--azul)}.btn-ok:hover{background:var(--azul);color:#fff}
+  .btn-restore{background:#f5f5f5;color:var(--gris)}.btn-restore:hover{background:#e0e0e0}
+  /* MODAL */
+  .modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:1000;align-items:center;justify-content:center;padding:14px}
+  .modal-wrap.open{display:flex}
+  .modal{background:#fff;border-radius:20px;padding:28px;max-width:540px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.22);animation:su .28s ease;max-height:93vh;overflow-y:auto}
+  @keyframes su{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+  .modal-title{font-family:'Playfair Display',serif;font-size:19px;color:var(--verde)}
+  .modal-close{background:var(--gris-c);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .info-box{background:var(--verde-p);border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:var(--verde);font-weight:700;line-height:1.5}
+  /* SUCCESS */
+  .success-box{text-align:center;padding:36px 16px}
+  .success-icon{width:68px;height:68px;background:var(--verde-p);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px}
+  .success-box h3{font-family:'Playfair Display',serif;font-size:21px;color:var(--verde);margin-bottom:10px}
+  .success-box p{color:var(--gris);font-size:14px;line-height:1.6}
+  /* ADMIN */
+  .tabs{display:flex;gap:3px;background:var(--gris-c);padding:4px;border-radius:12px;margin-bottom:22px}
+  .tab{flex:1;padding:9px;border:none;background:transparent;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;color:var(--gris);transition:all .2s}
+  .tab.active{background:#fff;color:var(--verde);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .tab-content{display:none}.tab-content.active{display:block}
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+  .stat-card{background:#fff;border-radius:12px;padding:18px;text-align:center;box-shadow:var(--sombra)}
+  .stat-num{font-size:26px;font-weight:700;color:var(--verde)}
+  .stat-label{font-size:11px;color:var(--gris);margin-top:3px}
+  /* TURNO CARD ADMIN */
+  .t-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .t-card.libre{border-left:4px solid var(--verde-p)}
+  .t-card.ocupado{border-left:4px solid var(--amarillo)}
+  .t-card.cancelado{border-left:4px solid #fca5a5;opacity:.65}
+  .t-card.atendido{border-left:4px solid var(--azul)}
+  .t-info h4{font-size:14px;font-weight:700;margin-bottom:3px}
+  .t-info p{font-size:12px;color:var(--gris);margin-top:2px;line-height:1.45}
+  .t-actions{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;justify-content:flex-end;min-width:80px}
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;margin-bottom:3px}
+  .b-libre{background:var(--verde-p);color:var(--verde)}
+  .b-ocupado{background:#fef3c7;color:#92400e}
+  .b-cancelado{background:#fde8e8;color:#e53e3e}
+  .b-atendido{background:var(--azul-c);color:var(--azul)}
+  /* CONFIG */
+  .dias-chk{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .dia-chk{display:flex;align-items:center;gap:5px}
+  .dia-chk input{width:15px;height:15px;accent-color:var(--verde)}
+  .dia-chk label{font-size:13px;font-weight:600;cursor:pointer}
+  .hr-row{display:grid;grid-template-columns:100px 1fr 1fr;gap:10px;align-items:center;margin-bottom:10px;font-size:13px}
+  .hr-row>label{font-weight:700;color:var(--gris)}
+  .hr-row input{padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;width:100%}
+  .alert{padding:11px 15px;border-radius:9px;font-size:13px;margin-bottom:14px}
+  .al-ok{background:var(--verde-p);color:var(--verde)}
+  .al-err{background:#fde8e8;color:#e53e3e}
+  .filtro-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .f-btn{padding:5px 13px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+  .f-btn.active{background:var(--verde);color:#fff;border-color:var(--verde)}
+  .sin-t{text-align:center;padding:36px;color:var(--gris);font-size:14px}
+  @media(max-width:620px){
+    .dias-grid{grid-template-columns:repeat(3,1fr)}
+    .form-row{grid-template-columns:1fr}
+    .stats-row{grid-template-columns:1fr 1fr}
+    .hero h2{font-size:22px}
+    nav{padding:10px 14px}
+    .hr-row{grid-template-columns:1fr}
+    .t-card{flex-direction:column}
+    .t-actions{justify-content:flex-start}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">🏥</div>
+    <div>
+      <h1>Dr. García — Pediatría</h1>
+      <p>Sistema de Turnos Online</p>
+    </div>
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn active" id="nb-pac" onclick="showPage('pac')">Sacar turno</button>
+    <button class="nav-btn" id="nb-adm" onclick="goAdmin()">🔒 Panel médico</button>
+  </div>
+</nav>
+
+<!-- ====== PACIENTE ====== -->
+<div id="page-pac" class="page active">
+  <div class="hero">
+    <h2>Solicitá tu turno en línea</h2>
+    <p>Seleccioná un horario disponible. Ante cualquier cambio, el médico te contactará por WhatsApp.</p>
+  </div>
+  <div class="container">
+    <div class="card">
+      <div class="card-title">📅 Turnos disponibles</div>
+      <div class="semana-nav">
+        <button class="btn-nav" onclick="movSem(-1)">◀</button>
+        <h3 id="sem-label">—</h3>
+        <button class="btn-nav" onclick="movSem(1)">▶</button>
+      </div>
+      <div class="dias-outer">
+        <div class="dias-grid" id="hdr-grid"></div>
+        <div class="dias-grid" id="slots-grid"></div>
+      </div>
+      <div class="leyenda">
+        <div class="leyenda-item"><div class="leyenda-dot" style="background:var(--verde-p);border:1px solid #b7e4c7"></div>Disponible</div>
+        <div class="leyenda-item"><div class="leyenda-dot" style="background:#f0f0f0"></div>Ocupado</div>
+        <div class="leyenda-item"><div class="leyenda-dot" style="background:#fde8e8"></div>Cancelado</div>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--gris)">¿Problemas para sacar turno? Comunicate con el consultorio.</p>
+  </div>
+</div>
+
+<!-- ====== ADMIN ====== -->
+<div id="page-adm" class="page">
+  <div id="login-wrap">
+    <div class="container" style="max-width:400px">
+      <div class="card" style="margin-top:40px">
+        <div class="card-title">🔒 Acceso médico</div>
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" id="a-user" class="form-control" placeholder="doctor">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="a-pass" class="form-control" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        </div>
+        <div id="login-err" class="alert al-err" style="display:none">Usuario o contraseña incorrectos.</div>
+        <button class="btn-p" onclick="doLogin()">Ingresar al panel</button>
+        <p style="text-align:center;margin-top:10px;font-size:11px;color:var(--gris)">Demo: <strong>doctor</strong> / <strong>1234</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel-wrap" style="display:none">
+    <div class="container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px">
+        <h2 style="font-family:'Playfair Display',serif;color:var(--verde);font-size:24px">Panel del Doctor</h2>
+        <button class="btn-s" onclick="doLogout()">Salir</button>
+      </div>
+      <div class="stats-row" id="adm-stats"></div>
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('t-ag',this)">📋 Agenda semanal</button>
+        <button class="tab" onclick="showTab('t-cfg',this)">⚙️ Configurar horarios</button>
+      </div>
+
+      <!-- AGENDA -->
+      <div id="t-ag" class="tab-content active">
+        <div class="card">
+          <div class="semana-nav">
+            <button class="btn-nav" onclick="movAdmSem(-1)">◀</button>
+            <h3 id="adm-sem-label">—</h3>
+            <button class="btn-nav" onclick="movAdmSem(1)">▶</button>
+          </div>
+          <div class="filtro-bar" id="filtro-bar"></div>
+          <div id="adm-list"></div>
+        </div>
+      </div>
+
+      <!-- CONFIG -->
+      <div id="t-cfg" class="tab-content">
+        <div class="card">
+          <div class="card-title">⚙️ Configurar disponibilidad</div>
+          <div id="cfg-alert" style="display:none"></div>
+          <div class="form-group">
+            <label>Días de atención</label>
+            <div class="dias-chk">
+              <div class="dia-chk"><input type="checkbox" id="d1" value="1" checked><label for="d1">Lunes</label></div>
+              <div class="dia-chk"><input type="checkbox" id="d2" value="2" checked><label for="d2">Martes</label></div>
+              <div class="dia-chk"><input type="checkbox" id="d3" value="3" checked><label for="d3">Miércoles</label></div>
+              <div class="dia-chk"><input type="checkbox" id="d4" value="4" checked><label for="d4">Jueves</label></div>
+              <div class="dia-chk"><input type="checkbox" id="d5" value="5" checked><label for="d5">Viernes</label></div>
+              <div class="dia-chk"><input type="checkbox" id="d6" value="6"><label for="d6">Sábado</label></div>
+            </div>
+          </div>
+          <div class="hr-row"><label>🌅 Mañana</label>
+            <div><small style="color:var(--gris);font-size:11px">Desde</small><input type="time" id="m1" value="08:00"></div>
+            <div><small style="color:var(--gris);font-size:11px">Hasta</small><input type="time" id="m2" value="12:30"></div>
+          </div>
+          <div class="hr-row"><label>☕ Descanso</label>
+            <div><small style="color:var(--gris);font-size:11px">Desde</small><input type="time" id="ds1" value="12:30"></div>
+            <div><small style="color:var(--gris);font-size:11px">Hasta</small><input type="time" id="ds2" value="16:00"></div>
+          </div>
+          <div class="hr-row"><label>🌇 Tarde</label>
+            <div><small style="color:var(--gris);font-size:11px">Desde</small><input type="time" id="t1" value="16:00"></div>
+            <div><small style="color:var(--gris);font-size:11px">Hasta</small><input type="time" id="t2" value="19:00"></div>
+          </div>
+          <div class="form-group" style="margin-top:14px">
+            <label>Duración de cada turno</label>
+            <select class="form-control" id="dur" style="max-width:180px">
+              <option value="15">15 minutos</option>
+              <option value="20" selected>20 minutos</option>
+              <option value="30">30 minutos</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+            <button class="btn-p" style="width:auto;margin:0" onclick="doGenerar()">💾 Generar turnos esta semana</button>
+            <button class="btn-s" onclick="doLimpiar()">🗑 Limpiar libres</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL TURNO (paciente) ====== -->
+<div class="modal-wrap" id="m-turno">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">📝 Solicitar turno</div>
+      <button class="modal-close" onclick="closeModal('m-turno')">✕</button>
+    </div>
+    <div class="info-box" id="m-turno-info"></div>
+
+    <!-- PASO 1: Ingreso de DNI -->
+    <div id="m-paso1">
+      <p style="font-size:13px;color:var(--gris);margin-bottom:14px">
+        Ingresá el DNI del niño/a. Si ya tenés turno registrado, cargamos tus datos automáticamente.
+      </p>
+      <div class="form-group">
+        <label>DNI del niño/a <span class="req">*</span></label>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="fdni-paso1" class="form-control" placeholder="Sin puntos ej: 45123456"
+            maxlength="8" inputmode="numeric"
+            onkeydown="if(event.key==='Enter')buscarDNI()"
+            style="flex:1">
+          <button class="btn-p" style="width:auto;margin:0;padding:10px 20px" onclick="buscarDNI()">Continuar →</button>
+        </div>
+        <div class="err-msg" id="edni-paso1"></div>
+      </div>
+    </div>
+
+    <!-- PASO 2: Formulario completo (nuevo o pre-cargado) -->
+    <div id="m-turno-form" style="display:none">
+      <!-- Banner cuando el paciente ya fue encontrado -->
+      <div id="banner-conocido" style="display:none;background:var(--verde-p);border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">✅</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--verde)" id="banner-nombre"></div>
+          <div style="font-size:12px;color:var(--verde)">Datos cargados automáticamente. Solo completá el motivo de consulta.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre del niño/a <span class="req">*</span></label>
+          <input type="text" id="fn" class="form-control" placeholder="Nombre y apellido">
+          <div class="err-msg" id="en"></div>
+        </div>
+        <div class="form-group">
+          <label>Fecha de nacimiento <span class="req">*</span></label>
+          <input type="date" id="fnac" class="form-control">
+          <div class="err-msg" id="enac"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>DNI del niño/a</label>
+          <input type="text" id="fdni" class="form-control" readonly
+            style="background:var(--gris-c);color:var(--gris);cursor:not-allowed">
+        </div>
+        <div class="form-group">
+          <label>Sexo <span class="req">*</span></label>
+          <select id="fsexo" class="form-control">
+            <option value="">Seleccionar...</option>
+            <option value="M">Masculino</option>
+            <option value="F">Femenino</option>
+          </select>
+          <div class="err-msg" id="esexo"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nombre del responsable <span class="req">*</span></label>
+          <input type="text" id="fresp" class="form-control" placeholder="Padre / madre / tutor">
+          <div class="err-msg" id="eresp"></div>
+        </div>
+        <div class="form-group">
+          <label>WhatsApp responsable <span class="req">*</span></label>
+          <input type="tel" id="fwsp" class="form-control" placeholder="Ej: 1155551234">
+          <div class="err-msg" id="ewsp"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email (opcional)</label>
+          <input type="email" id="femail" class="form-control" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Obra social</label>
+          <input type="text" id="fobra" class="form-control" placeholder="Ej: OSDE, Particular...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Motivo de consulta <span class="req">*</span></label>
+        <textarea id="fmot" class="form-control" rows="3" placeholder="Describa brevemente el motivo de la visita"></textarea>
+        <div class="err-msg" id="emot"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+        <button class="btn-p" style="flex:1;margin:0" onclick="doConfirmar()">✅ Confirmar solicitud de turno</button>
+        <button class="btn-s" onclick="volverPaso1()">← Cambiar DNI</button>
+      </div>
+    </div>
+
+    <!-- ÉXITO -->
+    <div id="m-turno-ok" style="display:none">
+      <div class="success-box">
+        <div class="success-icon">✅</div>
+        <h3>¡Turno solicitado!</h3>
+        <p>Tu solicitud fue registrada. El médico revisará la agenda y te avisará por WhatsApp ante cualquier cambio.</p>
+        <button class="btn-s" style="margin-top:18px" onclick="closeModal('m-turno');renderPaciente()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL CANCELAR (admin) ====== -->
+<div class="modal-wrap" id="m-cancel">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">❌ Cancelar turno</div>
+      <button class="modal-close" onclick="closeModal('m-cancel')">✕</button>
+    </div>
+    <div class="info-box" id="m-cancel-info"></div>
+    <div class="form-group">
+      <label>Mensaje al responsable por WhatsApp</label>
+      <textarea id="cancel-msg" class="form-control" rows="5"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+      <button class="btn-sm btn-wsp" style="font-size:13px;padding:10px 18px" onclick="doEnviarCancel()">📱 Abrir WhatsApp y cancelar</button>
+      <button class="btn-s" onclick="closeModal('m-cancel')">Volver</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STORAGE
+// ============================================================
+const gs = (k,d) => { try{return JSON.parse(localStorage.getItem(k))??d}catch{return d} };
+const ss = (k,v) => localStorage.setItem(k,JSON.stringify(v));
+
+// ============================================================
+// ESTADO
+// ============================================================
+let semOff=0, admOff=0, activoSlot=null, admSlot=null, filtroD='todos';
+const DIAS6=['Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DIAS6F=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+// ============================================================
+// NAVEGACIÓN
+// ============================================================
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nb-'+p)?.classList.add('active');
+}
+function goAdmin(){showPage('adm');document.getElementById('nb-adm').classList.add('active')}
+function showTab(id,btn){
+  document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+// ============================================================
+// AUTH
+// ============================================================
+function doLogin(){
+  const u=document.getElementById('a-user').value.trim();
+  const p=document.getElementById('a-pass').value;
+  if(u==='doctor'&&p==='1234'){
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('panel-wrap').style.display='block';
+    document.getElementById('login-err').style.display='none';
+    renderStats();renderAdm();
+  } else document.getElementById('login-err').style.display='block';
+}
+function doLogout(){
+  document.getElementById('login-wrap').style.display='block';
+  document.getElementById('panel-wrap').style.display='none';
+  document.getElementById('a-user').value='';
+  document.getElementById('a-pass').value='';
+}
+
+// ============================================================
+// FECHA UTILS
+// ============================================================
+function getLunes(off=0){
+  const h=new Date();h.setHours(0,0,0,0);
+  const d=h.getDay();
+  h.setDate(h.getDate()+(d===0?-6:1-d)+off*7);
+  return h;
+}
+const fmC=d=>d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});
+const fmL=d=>d.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'long'});
+const iso=d=>d.toISOString().split('T')[0];
+const t2m=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m};
+const m2t=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+
+// ============================================================
+// TURNOS LÓGICA
+// ============================================================
+function genTurnos(lunes,cfg){
+  const dur=parseInt(cfg.dur);
+  const ts=gs('ts',{});
+  for(let i=0;i<6;i++){
+    const f=new Date(lunes);f.setDate(lunes.getDate()+i);
+    const dow=f.getDay();
+    if(!cfg.dias.includes(dow))continue;
+    const fs=iso(f);
+    const franjas=[];
+    if(cfg.m1&&cfg.m2)franjas.push([t2m(cfg.m1),t2m(cfg.m2)]);
+    if(cfg.t1&&cfg.t2)franjas.push([t2m(cfg.t1),t2m(cfg.t2)]);
+    franjas.forEach(([de,ha])=>{
+      let cur=de;
+      while(cur+dur<=ha){
+        const h=m2t(cur);
+        const k=`${fs}_${h}`;
+        if(!ts[k])ts[k]={fecha:fs,hora:h,estado:'libre',pac:null};
+        cur+=dur;
+      }
+    });
+  }
+  ss('ts',ts);
+}
+
+function getSem(lunes){
+  const ts=gs('ts',{});
+  const r=[];
+  for(let i=0;i<6;i++){
+    const f=new Date(lunes);f.setDate(lunes.getDate()+i);
+    const fs=iso(f);
+    const del=Object.entries(ts)
+      .filter(([k])=>k.startsWith(fs+'_'))
+      .sort(([a],[b])=>a.localeCompare(b))
+      .map(([k,v])=>({key:k,...v}));
+    r.push({f,fs,slots:del});
+  }
+  return r;
+}
+
+// ============================================================
+// RENDER PACIENTE
+// ============================================================
+function renderPaciente(){
+  const lunes=getLunes(semOff);
+  const sab=new Date(lunes);sab.setDate(lunes.getDate()+5);
+  document.getElementById('sem-label').textContent=`Semana ${fmC(lunes)} — ${fmC(sab)}`;
+  const sem=getSem(lunes);
+  const hg=document.getElementById('hdr-grid');
+  const sg=document.getElementById('slots-grid');
+  hg.innerHTML='';sg.innerHTML='';
+  sem.forEach(({f,slots})=>{
+    const h=document.createElement('div');
+    h.className='dia-header';
+    h.innerHTML=`${DIAS6[f.getDay()-1]}<br><strong>${fmC(f)}</strong>`;
+    hg.appendChild(h);
+    const col=document.createElement('div');
+    col.className='turnos-col';
+    if(!slots.length){
+      col.innerHTML='<div style="text-align:center;font-size:10px;color:#ccc;padding:10px 2px">Sin<br>turnos</div>';
+    }else{
+      slots.forEach(t=>{
+        const s=document.createElement('div');
+        s.className=`slot ${t.estado==='libre'?'libre':t.estado==='cancelado'?'cancelado':t.estado==='atendido'?'atendido':'ocupado'}`;
+        s.textContent=t.hora;
+        if(t.estado==='libre')s.onclick=()=>abrirTurno(t);
+        col.appendChild(s);
+      });
+    }
+    sg.appendChild(col);
+  });
+}
+function movSem(d){semOff=Math.max(0,semOff+d);renderPaciente()}
+
+// ============================================================
+// MODAL SOLICITAR TURNO — PASO 1 DNI + PASO 2 FORMULARIO
+// ============================================================
+function abrirTurno(t){
+  activoSlot=t;
+  const f=new Date(t.fecha+'T12:00:00');
+  document.getElementById('m-turno-info').innerHTML=`📅 <strong>${fmL(f)}</strong> &nbsp;⏰ <strong>${t.hora} hs</strong>`;
+  // Resetear al paso 1
+  document.getElementById('m-paso1').style.display='block';
+  document.getElementById('m-turno-form').style.display='none';
+  document.getElementById('m-turno-ok').style.display='none';
+  document.getElementById('fdni-paso1').value='';
+  document.getElementById('edni-paso1').textContent='';
+  document.getElementById('m-turno').classList.add('open');
+  setTimeout(()=>document.getElementById('fdni-paso1').focus(),200);
+}
+
+function buscarDNI(){
+  const dni=document.getElementById('fdni-paso1').value.trim();
+  const errEl=document.getElementById('edni-paso1');
+  if(!/^\d{6,8}$/.test(dni)){
+    errEl.textContent='DNI inválido (6-8 dígitos, sin puntos ni espacios)';
+    return;
+  }
+  errEl.textContent='';
+
+  // Buscar en historial de turnos anteriores
+  const ts=gs('ts',{});
+  const historial=Object.values(ts).filter(t=>t.pac&&t.pac.dni===dni);
+  // También buscar en el módulo de historia clínica (comparten localStorage)
+  const pacs=gs('pacs',{});
+  const pacHC=pacs[dni];
+
+  let datosConocidos=null;
+
+  if(pacHC){
+    // Paciente en historia clínica — datos más completos
+    datosConocidos={
+      nombreNino:`${pacHC.nombre} ${pacHC.apellido}`,
+      fechaNac:pacHC.fechaNac,
+      dni:pacHC.dni,
+      sexo:pacHC.sexo,
+      nombreResp:pacHC.nombreResp,
+      wsp:pacHC.wsp,
+      email:pacHC.email||'',
+      obraSocial:pacHC.obraSocial||'',
+    };
+  } else if(historial.length){
+    // Paciente encontrado en turno previo
+    const ultimo=historial[historial.length-1];
+    datosConocidos={...ultimo.pac};
+  }
+
+  // Ocultar paso 1, mostrar formulario
+  document.getElementById('m-paso1').style.display='none';
+  document.getElementById('m-turno-form').style.display='block';
+
+  // Limpiar errores y campos
+  ['en','enac','esexo','eresp','ewsp','emot'].forEach(id=>document.getElementById(id).textContent='');
+  document.querySelectorAll('#m-turno-form .form-control:not([readonly])').forEach(x=>x.classList.remove('err'));
+
+  // Fijar DNI (readonly)
+  document.getElementById('fdni').value=dni;
+
+  if(datosConocidos){
+    // PRE-CARGAR datos conocidos
+    document.getElementById('fn').value=datosConocidos.nombreNino||'';
+    document.getElementById('fnac').value=datosConocidos.fechaNac||'';
+    document.getElementById('fsexo').value=datosConocidos.sexo||'';
+    document.getElementById('fresp').value=datosConocidos.nombreResp||'';
+    document.getElementById('fwsp').value=datosConocidos.wsp||'';
+    document.getElementById('femail').value=datosConocidos.email||'';
+    document.getElementById('fobra').value=datosConocidos.obraSocial||'';
+    document.getElementById('fmot').value='';
+
+    // Mostrar banner verde
+    const banner=document.getElementById('banner-conocido');
+    document.getElementById('banner-nombre').textContent=
+      `👦 ${datosConocidos.nombreNino} — DNI ${dni}`;
+    banner.style.display='flex';
+
+    // Foco directo en motivo
+    setTimeout(()=>document.getElementById('fmot').focus(),150);
+  } else {
+    // Paciente nuevo — limpiar todo excepto DNI
+    ['fn','fnac','fresp','fwsp','femail','fobra','fmot'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('fsexo').value='';
+    document.getElementById('banner-conocido').style.display='none';
+    setTimeout(()=>document.getElementById('fn').focus(),150);
+  }
+}
+
+function volverPaso1(){
+  document.getElementById('m-turno-form').style.display='none';
+  document.getElementById('m-paso1').style.display='block';
+  document.getElementById('fdni-paso1').value='';
+  document.getElementById('edni-paso1').textContent='';
+  setTimeout(()=>document.getElementById('fdni-paso1').focus(),100);
+}
+
+function vld(id,eid,fn,msg){
+  const v=document.getElementById(id).value.trim();
+  const ok=fn(v);
+  document.getElementById(eid).textContent=ok?'':msg;
+  document.getElementById(id).classList.toggle('err',!ok);
+  return ok;
+}
+
+function doConfirmar(){
+  let ok=true;
+  ok=vld('fn','en',v=>v.length>2,'Ingresá el nombre completo')&ok;
+  ok=vld('fnac','enac',v=>v!=='','Ingresá la fecha de nacimiento')&ok;
+  ok=vld('fsexo','esexo',v=>v!=='','Seleccioná el sexo')&ok;
+  ok=vld('fresp','eresp',v=>v.length>2,'Ingresá el nombre del responsable')&ok;
+  ok=vld('fwsp','ewsp',v=>/^\d{8,15}$/.test(v),'Teléfono inválido (solo números)')&ok;
+  ok=vld('fmot','emot',v=>v.length>3,'Ingresá el motivo de consulta')&ok;
+  if(!ok)return;
+  const ts=gs('ts',{});
+  ts[activoSlot.key]={...ts[activoSlot.key],estado:'ocupado',pac:{
+    nombreNino:document.getElementById('fn').value.trim(),
+    fechaNac:document.getElementById('fnac').value,
+    dni:document.getElementById('fdni').value.trim(),
+    sexo:document.getElementById('fsexo').value,
+    nombreResp:document.getElementById('fresp').value.trim(),
+    wsp:document.getElementById('fwsp').value.trim(),
+    email:document.getElementById('femail').value.trim(),
+    obraSocial:document.getElementById('fobra').value.trim(),
+    motivo:document.getElementById('fmot').value.trim(),
+  }};
+  ss('ts',ts);
+  document.getElementById('m-turno-form').style.display='none';
+  document.getElementById('m-turno-ok').style.display='block';
+}
+
+// ============================================================
+// ADMIN STATS
+// ============================================================
+function renderStats(){
+  const ts=Object.values(gs('ts',{}));
+  const hoy=iso(new Date());
+  const oc=ts.filter(t=>t.estado==='ocupado').length;
+  const ho=ts.filter(t=>t.fecha===hoy&&t.estado==='ocupado').length;
+  const at=ts.filter(t=>t.estado==='atendido').length;
+  const ca=ts.filter(t=>t.estado==='cancelado').length;
+  document.getElementById('adm-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${ho}</div><div class="stat-label">Turnos hoy</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--naranja)">${oc}</div><div class="stat-label">Pendientes</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--azul)">${at}</div><div class="stat-label">Atendidos</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#e53e3e">${ca}</div><div class="stat-label">Cancelados</div></div>
+  `;
+}
+
+// ============================================================
+// AGENDA ADMIN
+// ============================================================
+function renderAdm(){
+  const lunes=getLunes(admOff);
+  const sab=new Date(lunes);sab.setDate(lunes.getDate()+5);
+  document.getElementById('adm-sem-label').textContent=`Semana ${fmC(lunes)} — ${fmC(sab)}`;
+  const sem=getSem(lunes);
+
+  // Filtros
+  const fb=document.getElementById('filtro-bar');
+  fb.innerHTML=`<button class="f-btn ${filtroD==='todos'?'active':''}" onclick="setF('todos')">Todos</button>`;
+  sem.forEach(({f,fs,slots},i)=>{
+    if(slots.length) fb.innerHTML+=`<button class="f-btn ${filtroD===fs?'active':''}" onclick="setF('${fs}')">${DIAS6[i]} ${fmC(f)}</button>`;
+  });
+
+  const list=document.getElementById('adm-list');list.innerHTML='';
+  let total=0;
+
+  sem.forEach(({f,fs,slots})=>{
+    if(filtroD!=='todos'&&filtroD!==fs)return;
+    if(!slots.length)return;
+    const dt=document.createElement('div');
+    dt.style.cssText='font-weight:700;font-size:12px;color:var(--gris);text-transform:uppercase;margin:14px 0 8px;letter-spacing:.05em';
+    dt.textContent=fmL(f);list.appendChild(dt);
+
+    slots.forEach(t=>{
+      total++;
+      const card=document.createElement('div');
+      card.className=`t-card ${t.estado}`;
+      const badges={libre:`<span class="badge b-libre">Disponible</span>`,ocupado:`<span class="badge b-ocupado">Pendiente</span>`,cancelado:`<span class="badge b-cancelado">Cancelado</span>`,atendido:`<span class="badge b-atendido">Atendido</span>`};
+      const badge=badges[t.estado]||'';
+      let pInfo='',acts='';
+      if(t.pac){
+        const p=t.pac;
+        const edad=p.fechaNac?calcEdad(new Date(p.fechaNac+'T12:00:00')):'';
+        pInfo=`<p>👦 <strong>${p.nombreNino}</strong>${edad?` — ${edad}`:''}${p.sexo?` (${p.sexo})`:''}</p>
+          <p>👤 ${p.nombreResp} &nbsp;📱 ${p.wsp}</p>
+          ${p.obraSocial?`<p>🏥 ${p.obraSocial}</p>`:''}
+          ${p.motivo?`<p>📋 ${p.motivo}</p>`:''}
+          ${p.dni?`<p style="font-size:10px;color:#bbb">DNI: ${p.dni}</p>`:''}`;
+        if(t.estado==='ocupado')acts=`
+          <button class="btn-sm btn-cancel" onclick="abrirCancel('${t.key}')">❌ Cancelar</button>
+          <button class="btn-sm btn-ok" onclick="marcarAt('${t.key}')">✅ Atendido</button>
+          <button class="btn-sm btn-wsp" onclick="wspD('${p.wsp}','${p.nombreResp.replace(/'/g,"\\'")}')">💬 WA</button>`;
+      }
+      if(t.estado==='cancelado')acts=`<button class="btn-sm btn-restore" onclick="restaurar('${t.key}')">↩ Restaurar</button>`;
+      card.innerHTML=`
+        <div class="t-info">${badge}<h4>⏰ ${t.hora} hs</h4>${pInfo}</div>
+        <div class="t-actions">${acts}</div>`;
+      list.appendChild(card);
+    });
+  });
+  if(!total) list.innerHTML='<div class="sin-t">📭 No hay turnos en esta semana.<br><small>Configurá disponibilidad en ⚙️</small></div>';
+}
+
+function setF(f){filtroD=f;renderAdm()}
+function movAdmSem(d){admOff+=d;renderAdm();renderStats()}
+function calcEdad(dob){
+  const h=new Date();let y=h.getFullYear()-dob.getFullYear(),m=h.getMonth()-dob.getMonth();
+  if(m<0){y--;m+=12}
+  if(y===0)return`${m}m`;if(y<2)return`${y}a ${m}m`;return`${y} años`;
+}
+function marcarAt(k){const ts=gs('ts',{});if(ts[k])ts[k].estado='atendido';ss('ts',ts);renderAdm();renderStats()}
+function restaurar(k){const ts=gs('ts',{});if(ts[k]){ts[k].estado='libre';ts[k].pac=null}ss('ts',ts);renderAdm();renderStats()}
+function wspD(wsp,nom){const m=encodeURIComponent(`Hola ${nom}, le escribimos del consultorio del Dr. García Pediatría.`);window.open(`https://wa.me/54${wsp}?text=${m}`,'_blank')}
+
+// ============================================================
+// MODAL CANCELAR
+// ============================================================
+function abrirCancel(key){
+  const ts=gs('ts',{});admSlot={key,...ts[key]};
+  const p=admSlot.pac;const f=new Date(admSlot.fecha+'T12:00:00');
+  document.getElementById('m-cancel-info').innerHTML=`📅 <strong>${fmL(f)}</strong> &nbsp;⏰ <strong>${admSlot.hora} hs</strong><br>👦 ${p?.nombreNino||''} &nbsp;👤 ${p?.nombreResp||''}`;
+  document.getElementById('cancel-msg').value=`Hola ${p?.nombreResp||''}, le informamos que el turno del ${fmL(f)} a las ${admSlot.hora} hs ha sido cancelado. Disculpe los inconvenientes. Para reprogramar comuníquese con el consultorio. Dr. García Pediatría.`;
+  document.getElementById('m-cancel').classList.add('open');
+}
+function doEnviarCancel(){
+  const p=admSlot?.pac;if(!p?.wsp)return alert('No hay número de WhatsApp.');
+  const msg=encodeURIComponent(document.getElementById('cancel-msg').value);
+  window.open(`https://wa.me/54${p.wsp}?text=${msg}`,'_blank');
+  const ts=gs('ts',{});if(ts[admSlot.key])ts[admSlot.key].estado='cancelado';ss('ts',ts);
+  closeModal('m-cancel');renderAdm();renderStats();
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function doGenerar(){
+  const dias=[];[1,2,3,4,5,6].forEach(n=>{if(document.getElementById('d'+n)?.checked)dias.push(n)});
+  if(!dias.length)return showCfgAlert('err','Seleccioná al menos un día.');
+  const cfg={dias,m1:document.getElementById('m1').value,m2:document.getElementById('m2').value,t1:document.getElementById('t1').value,t2:document.getElementById('t2').value,dur:document.getElementById('dur').value};
+  ss('cfg',cfg);
+  genTurnos(getLunes(admOff),cfg);
+  showCfgAlert('ok','✅ Turnos generados para esta semana.');
+  renderAdm();renderStats();
+}
+function doLimpiar(){
+  if(!confirm('¿Eliminar turnos LIBRES de esta semana?'))return;
+  const lunes=getLunes(admOff);const ts=gs('ts',{});
+  for(let i=0;i<6;i++){const f=new Date(lunes);f.setDate(lunes.getDate()+i);const fs=iso(f);Object.keys(ts).filter(k=>k.startsWith(fs+'_')&&ts[k].estado==='libre').forEach(k=>delete ts[k])}
+  ss('ts',ts);showCfgAlert('ok','Turnos libres eliminados.');renderAdm();renderStats();
+}
+function showCfgAlert(t,m){const el=document.getElementById('cfg-alert');el.className=`alert al-${t}`;el.textContent=m;el.style.display='block';setTimeout(()=>el.style.display='none',4000)}
+
+// ============================================================
+// INIT
+// ============================================================
+(function(){
+  const cfg=gs('cfg',null);
+  if(cfg){
+    [1,2,3,4,5,6].forEach(n=>{const el=document.getElementById('d'+n);if(el)el.checked=cfg.dias.includes(n)});
+    ['m1','m2','t1','t2','dur'].forEach(k=>{const el=document.getElementById(k);if(el&&cfg[k])el.value=cfg[k]});
+  }
+  // Demo: generar si no hay turnos
+  const sem=getSem(getLunes(0));
+  if(!sem.some(d=>d.slots.length)){
+    genTurnos(getLunes(0),{dias:[1,2,3,4,5],m1:'08:00',m2:'12:30',t1:'16:00',t2:'19:00',dur:'20'});
+  }
+  renderPaciente();
+})();
+</script>
+</body>
+</html>
